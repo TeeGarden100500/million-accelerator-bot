@@ -1,20 +1,18 @@
 require('dotenv').config();
-console.log('Million Accelerator Bot started');
-
-// ==== Render Port Binding Dummy Server ====
-const http = require('http');
-const PORT = process.env.PORT || 3000;
-
-http.createServer((req, res) => {
-  res.writeHead(200);
-  res.end('Million Accelerator Bot is running.\n');
-}).listen(PORT, () => {
-  console.log(`Dummy server listening on port ${PORT}`);
-});
-
+const { sendTelegramMessage } = require('./telegram');
 const { analyzeTokens } = require('./monitor');
 
-(async () => {
-  console.log('🚀 Запуск анализа токенов...');
+async function start() {
+  await sendTelegramMessage('📡 Million Accelerator запущен. Мониторинг активен.');
+
+  // Запускаем цикл: каждые 5 минут
+  setInterval(async () => {
+    console.log('🕵️ Анализ токенов...');
+    await analyzeTokens();
+  }, 5 * 60 * 1000); // 5 минут
+
+  // Первый вызов сразу
   await analyzeTokens();
-})();
+}
+
+start();
