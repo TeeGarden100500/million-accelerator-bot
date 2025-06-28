@@ -12,14 +12,20 @@ async function fetchTokenList() {
       }
     });
 
-    const tokens = response.data.map(token => ({
-      id: token.id,
-      symbol: token.symbol,
-      name: token.name,
-      price: token.current_price,
-      marketCap: token.market_cap,
-      volume: token.total_volume
-    }));
+    const tokens = response.data
+      .filter(token =>
+        token.price_change_percentage_24h > 20 &&
+        token.total_volume > 500000
+      )
+      .map(token => ({
+        id: token.id,
+        symbol: token.symbol,
+        name: token.name,
+        price: token.current_price,
+        marketCap: token.market_cap,
+        volume: token.total_volume,
+        change24h: token.price_change_percentage_24h
+      }));
 
     return tokens;
   } catch (error) {
