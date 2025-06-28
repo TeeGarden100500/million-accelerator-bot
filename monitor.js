@@ -1,20 +1,28 @@
 const axios = require('axios');
 const { sendTelegramMessage } = require('./telegram');
 
-// Захардкоженные токены (примерные адреса)
+// Токены для мониторинга
 const TOKENS = [
+  { name: 'PEPE', address: '0x6982508145454Ce325dDbE47a25d4ec3d2311933' },
   { name: 'DEGEN', address: '0xA5E59761eBD4436fa4d20E1A27cBa29FB2471Fc6' },
-  { name: 'PEPE', address: '0x6982508145454Ce325dDbE47a25d4ec3d2311933' }
 ];
 
-// Простейший фильтр: "новый токен, объем выше 1000"
+// Проверяем объем торгов через Dexscreener
 async function analyzeTokens() {
   for (const token of TOKENS) {
-    // Пример запроса: заглушка
-    const isInteresting = Math.random() > 0.5;
+    try {
+      const url = `https://api.dexscreener.com/latest/dex/tokens/${token.address}`;
+      const res = await axios.get(url);
 
-    if (isInteresting) {
-      await sendTelegramMessage(`🔥 Найден интересный токен: ${token.name}\n(${token.address})`);
+      const data = res.data.pairs?.[0];
+      if (!data) continue;
+
+      const volume = parseFloat(data.volume.h24Usd);
+      if (volume > 10000) {
+        await sendTelegramMessage(`💰 Объем по ${token.name}: $${volume.toLocaleString()} — токен интересен.\n🔗 ${data.url}`);
+      }
+    } catch (err) {
+      console.error(`Ошибка при анализе ${token.name}:`, err.message);
     }
   }
 }
