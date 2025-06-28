@@ -11,3 +11,10 @@ http.createServer((req, res) => {
 }).listen(PORT, () => {
   console.log(`Dummy server listening on port ${PORT}`);
 });
+
+const { analyzeTokens } = require('./monitor');
+
+(async () => {
+  console.log('🚀 Запуск анализа токенов...');
+  await analyzeTokens();
+})();
