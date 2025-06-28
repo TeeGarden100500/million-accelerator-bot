@@ -1,2 +1,1 @@
-# million-accelerator-bot
-Инфраструктура автоматизации роста криптокапитала — трекер токенов, сигналов, и венчурных циклов
+# million-accelerator-bot\n\nBot for tracking and signaling venture crypto assets.
