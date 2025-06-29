@@ -1,6 +1,7 @@
 const WebSocket = require('ws');
 const axios = require('axios');
 const { sendTelegramMessage } = require('../utils/telegram');
+const { isImportantWallet } = require('../utils/importantWallets');
 require('dotenv').config();
 
 const ALCHEMY_WSS = process.env.ALCHEMY_WSS;
@@ -45,6 +46,8 @@ function startSafeAlchemyTxWatcher() {
 
       const tx = txDetails?.data?.result;
       if (!tx || !tx.from || !tx.to) return;
+
+      if (!isImportantWallet(tx.from) && !isImportantWallet(tx.to)) return;
 
       const message = `📦 Новая транзакция:\nот ${tx.from}\nк ${tx.to}\nhash: ${tx.hash}`;
       logDebug(message);

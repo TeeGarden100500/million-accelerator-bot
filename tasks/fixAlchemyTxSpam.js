@@ -8,6 +8,7 @@ const axios = require('axios');
 require('dotenv').config();
 
 const { sendTelegramMessage } = require('../telegram');
+const { isImportantWallet } = require('../src/utils/importantWallets');
 
 const wsUrl = process.env.ALCHEMY_WSS;
 
@@ -47,6 +48,8 @@ ws.on('message', async (data) => {
 
       const tx = response.data?.result;
       if (!tx || !tx.from || !tx.to) return;
+
+      if (!isImportantWallet(tx.from) && !isImportantWallet(tx.to)) return;
 
       const message = `\uD83C\uDF10 Новая транзакция:\nFrom: ${tx.from}\nTo: ${tx.to}\nHash: ${tx.hash}`;
       await sendTelegramMessage(message);
