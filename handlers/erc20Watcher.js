@@ -1,13 +1,10 @@
 const WebSocket = require('ws');
 const { sendTelegramMessage } = require('../telegram');
 const tokens = require('../database/tokens.json');
+const { isImportantWallet } = require('../src/utils/importantWallets');
 
 const ALCHEMY_WSS = process.env.ALCHEMY_WSS;
 const DEBUG = process.env.DEBUG_LOG_LEVEL === 'debug';
-const IMPORTANT_WALLETS = (process.env.IMPORTANT_WALLETS || '')
-  .split(',')
-  .map((a) => a.trim().toLowerCase())
-  .filter(Boolean);
 
 const TRANSFER_TOPIC =
   '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
@@ -65,9 +62,7 @@ function startErc20Watcher() {
         const to = '0x' + log.topics[2].slice(26);
 
         const involved =
-          IMPORTANT_WALLETS.length === 0 ||
-          IMPORTANT_WALLETS.includes(from.toLowerCase()) ||
-          IMPORTANT_WALLETS.includes(to.toLowerCase());
+          isImportantWallet(from) || isImportantWallet(to);
         if (!involved) continue;
 
         const value = BigInt(log.data);

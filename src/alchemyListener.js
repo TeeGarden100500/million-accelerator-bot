@@ -1,5 +1,6 @@
 const WebSocket = require('ws');
 const { sendTelegramMessage } = require('./utils/telegram');
+const { isImportantWallet } = require('./utils/importantWallets');
 
 // Контракты, за которыми следим
 const KNOWN_CONTRACTS = {
@@ -75,6 +76,8 @@ function startAlchemyListener() {
         .map((a) => a.toLowerCase()).includes(toLower);
 
       if (valueWei < TEN_ETH_WEI && !isWhitelisted && transfers <= 2) return;
+
+      if (!isImportantWallet(tx.from) && !isImportantWallet(tx.to)) return;
 
       const name =
         Object.entries(KNOWN_CONTRACTS).find(([, addr]) => addr.toLowerCase() === toLower)?.[0] ||
