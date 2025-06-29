@@ -5,7 +5,7 @@ const express = require('express');
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 const app = express();
 const PORT = process.env.PORT || 10000;
-const { startSafeAlchemyTxWatcher } = require('./src/safeAlchemyTxWatcher');
+const { startErc20Watcher } = require('./handlers/erc20Watcher');
 
 bot.start((ctx) => ctx.reply('Добро пожаловать в Million Accelerator'));
 bot.command('ping', (ctx) => ctx.reply('pong'));
@@ -15,7 +15,7 @@ bot.launch().then(() => {
   console.log('🤖 Telegram bot started');
 });
 
-startSafeAlchemyTxWatcher();
+startErc20Watcher();
 
 // Заглушка для Render
 app.get('/', (req, res) => {
