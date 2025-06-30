@@ -65,6 +65,8 @@ function startAlchemyListener() {
       const tx = msg?.params?.result;
       if (!tx || !tx.from || !tx.to || !tx.hash || !tx.value) return;
 
+      if (!isImportantWallet(tx.from) && !isImportantWallet(tx.to)) return;
+
       const valueWei = BigInt(tx.value);
       const transfers = Array.isArray(tx.logs)
         ? tx.logs.filter((l) => l.topics && l.topics[0] ===
@@ -76,8 +78,6 @@ function startAlchemyListener() {
         .map((a) => a.toLowerCase()).includes(toLower);
 
       if (valueWei < TEN_ETH_WEI && !isWhitelisted && transfers <= 2) return;
-
-      if (!isImportantWallet(tx.from) && !isImportantWallet(tx.to)) return;
 
       const name =
         Object.entries(KNOWN_CONTRACTS).find(([, addr]) => addr.toLowerCase() === toLower)?.[0] ||
