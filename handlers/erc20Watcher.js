@@ -2,13 +2,16 @@ const WebSocket = require('ws');
 const { sendTelegramMessage } = require('../telegram');
 const tokens = require('../database/tokens.json');
 const { isImportantWallet } = require('../src/utils/importantWallets');
+const settings = require('../config/settings');
+const { getTokenPrice } = require('../services/geckoService');
 
 const ALCHEMY_WSS = process.env.ALCHEMY_WSS;
-const DEBUG = process.env.DEBUG_LOG_LEVEL === 'debug';
+const LOG_LEVEL = process.env.DEBUG_LOG_LEVEL || 'info';
+const DEBUG = LOG_LEVEL === 'debug' || LOG_LEVEL === 'verbose';
+const VERBOSE = LOG_LEVEL === 'verbose';
 
 const TRANSFER_TOPIC =
   '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
-const MIN_VALUE = 10000n * 10n ** 18n; // 10k tokens with 18 decimals
 
 function logDebug(msg) {
   if (DEBUG) {
@@ -66,12 +69,24 @@ function startErc20Watcher() {
         if (!involved) continue;
 
         const value = BigInt(log.data);
-        if (value < MIN_VALUE) continue;
 
         const tokenAddress = log.address;
         const symbol = getTokenSymbol(tokenAddress);
-        const amount = value / 10n ** 18n;
-        const message = `🚀 ERC-20 Transfer >10K$: ${symbol} from: ${shortAddr(from)} to: ${shortAddr(to)}, value: ${amount}`;
+        const amount = Number(value) / 1e18;
+
+        const price = await getTokenPrice({ address: tokenAddress, symbol });
+        const usdAmount = amount * price;
+
+        if (usdAmount < settings.MIN_TX_USD) {
+          if (VERBOSE) {
+            console.log(
+              `[FILTER] ${symbol} transfer below $${settings.MIN_TX_USD}: $${usdAmount.toFixed(2)}`
+            );
+          }
+          continue;
+        }
+
+        const message = `🚀 ERC-20 Transfer >$${settings.MIN_TX_USD}: ${symbol} from: ${shortAddr(from)} to: ${shortAddr(to)}, value: ${amount}`;
         logDebug(message);
         await sendTelegramMessage(message);
       }
