@@ -2,6 +2,15 @@ const WebSocket = require('ws');
 const { sendTelegramMessage } = require('./utils/telegram');
 const { saveToHistory } = require('./utils/historyLogger');
 const { isImportantWallet } = require('./utils/importantWallets');
+const { classifyTxEvent } = require('./utils/eventClassifier');
+const { getTokenPrice } = require('../services/geckoService');
+
+const TAG_EMOJIS = {
+  Flash: '🚨',
+  Whale: '🐳',
+  SmartMoney: '🧠',
+  Deployer: '🚀',
+};
 
 // Контракты, за которыми следим
 const KNOWN_CONTRACTS = {
@@ -84,7 +93,23 @@ function startAlchemyListener() {
         Object.entries(KNOWN_CONTRACTS).find(([, addr]) => addr.toLowerCase() === toLower)?.[0] ||
         shortAddr(tx.to);
 
-      const message = `💸 ${formatEther(valueWei)} ETH от ${shortAddr(tx.from)} к ${name}\n🔗 https://etherscan.io/tx/${tx.hash}`;
+      const ethPrice = await getTokenPrice({ symbol: 'ethereum' });
+      const usdAmount = Number(formatEther(valueWei)) * ethPrice;
+
+      const tags = classifyTxEvent({
+        from: tx.from,
+        to: tx.to,
+        value: Number(formatEther(valueWei)),
+        tokenSymbol: 'ETH',
+        usdValue: usdAmount,
+        timestamp: new Date().toISOString(),
+      });
+      const tagPrefix =
+        tags.length > 0
+          ? `${tags.map((t) => `${TAG_EMOJIS[t]} ${t}`).join(' + ')}\n`
+          : '';
+
+      const message = `${tagPrefix}💸 ${formatEther(valueWei)} ETH от ${shortAddr(tx.from)} к ${name}\n🔗 https://etherscan.io/tx/${tx.hash}`;
       logDebug(message);
       await sendTelegramMessage(message);
       saveToHistory({
