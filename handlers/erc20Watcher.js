@@ -5,6 +5,14 @@ const tokens = require('../database/tokens.json');
 const { isImportantWallet } = require('../src/utils/importantWallets');
 const settings = require('../config/settings');
 const { getTokenPrice } = require('../services/geckoService');
+const { classifyTxEvent } = require('../src/utils/eventClassifier');
+
+const TAG_EMOJIS = {
+  Flash: '🚨',
+  Whale: '🐳',
+  SmartMoney: '🧠',
+  Deployer: '🚀',
+};
 
 const ALCHEMY_WSS = process.env.ALCHEMY_WSS;
 const LOG_LEVEL = process.env.DEBUG_LOG_LEVEL || 'info';
@@ -87,7 +95,20 @@ function startErc20Watcher() {
           continue;
         }
 
-        const message = `🚀 ERC-20 Transfer >$${settings.MIN_TX_USD}: ${symbol} from: ${shortAddr(from)} to: ${shortAddr(to)}, value: ${amount}`;
+        const tags = classifyTxEvent({
+          from,
+          to,
+          value: amount,
+          tokenSymbol: symbol,
+          usdValue: usdAmount,
+          timestamp: new Date().toISOString(),
+        });
+        const tagPrefix =
+          tags.length > 0
+            ? `${tags.map((t) => `${TAG_EMOJIS[t]} ${t}`).join(' + ')}\n`
+            : '';
+
+        const message = `${tagPrefix}🚀 ERC-20 Transfer >$${settings.MIN_TX_USD}: ${symbol} from: ${shortAddr(from)} to: ${shortAddr(to)}, value: ${amount}`;
         logDebug(message);
         await sendTelegramMessage(message);
         saveToHistory({

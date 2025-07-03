@@ -10,6 +10,15 @@ require('dotenv').config();
 const { sendTelegramMessage } = require('../telegram');
 const { saveToHistory } = require('../src/utils/historyLogger');
 const { isImportantWallet } = require('../src/utils/importantWallets');
+const { classifyTxEvent } = require('../src/utils/eventClassifier');
+const { getTokenPrice } = require('../services/geckoService');
+
+const TAG_EMOJIS = {
+  Flash: '🚨',
+  Whale: '🐳',
+  SmartMoney: '🧠',
+  Deployer: '🚀',
+};
 
 const wsUrl = process.env.ALCHEMY_WSS;
 
@@ -52,7 +61,20 @@ ws.on('message', async (data) => {
 
       if (!isImportantWallet(tx.from) && !isImportantWallet(tx.to)) return;
 
-      const message = `\uD83C\uDF10 Новая транзакция:\nFrom: ${tx.from}\nTo: ${tx.to}\nHash: ${tx.hash}`;
+      const ethPrice = await getTokenPrice({ symbol: 'ethereum' });
+      const usdAmount = Number(tx.value || 0) / 1e18 * ethPrice;
+
+      const tags = classifyTxEvent({
+        from: tx.from,
+        to: tx.to,
+        value: tx.value || '0',
+        tokenSymbol: 'ETH',
+        usdValue: usdAmount,
+        timestamp: new Date().toISOString(),
+      });
+      const tagPrefix = tags.length ? `${tags.map(t => `${TAG_EMOJIS[t]} ${t}`).join(' + ')}\n` : '';
+
+      const message = `${tagPrefix}\uD83C\uDF10 Новая транзакция:\nFrom: ${tx.from}\nTo: ${tx.to}\nHash: ${tx.hash}`;
       await sendTelegramMessage(message);
       saveToHistory({
         timestamp: new Date().toISOString(),
