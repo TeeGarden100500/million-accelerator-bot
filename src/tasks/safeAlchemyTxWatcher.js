@@ -1,6 +1,7 @@
 const WebSocket = require('ws');
 const axios = require('axios');
 const { sendTelegramMessage } = require('../utils/telegram');
+const { saveToHistory } = require('../utils/historyLogger');
 const { isImportantWallet } = require('../utils/importantWallets');
 require('dotenv').config();
 
@@ -52,6 +53,15 @@ function startSafeAlchemyTxWatcher() {
       const message = `📦 Новая транзакция:\nот ${tx.from}\nк ${tx.to}\nhash: ${tx.hash}`;
       logDebug(message);
       await sendTelegramMessage(message);
+      saveToHistory({
+        timestamp: new Date().toISOString(),
+        hash: tx.hash,
+        from: tx.from,
+        to: tx.to,
+        tokenSymbol: 'ETH',
+        amount: '0',
+        usdValue: 0,
+      });
     } catch (err) {
       console.error('❌ Ошибка при обработке транзакции:', err.message);
     }

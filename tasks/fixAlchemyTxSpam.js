@@ -8,6 +8,7 @@ const axios = require('axios');
 require('dotenv').config();
 
 const { sendTelegramMessage } = require('../telegram');
+const { saveToHistory } = require('../src/utils/historyLogger');
 const { isImportantWallet } = require('../src/utils/importantWallets');
 
 const wsUrl = process.env.ALCHEMY_WSS;
@@ -53,6 +54,15 @@ ws.on('message', async (data) => {
 
       const message = `\uD83C\uDF10 Новая транзакция:\nFrom: ${tx.from}\nTo: ${tx.to}\nHash: ${tx.hash}`;
       await sendTelegramMessage(message);
+      saveToHistory({
+        timestamp: new Date().toISOString(),
+        hash: tx.hash,
+        from: tx.from,
+        to: tx.to,
+        tokenSymbol: 'ETH',
+        amount: '0',
+        usdValue: 0,
+      });
     }
   } catch (err) {
     console.error('[WebSocket Message Error]', err.message);

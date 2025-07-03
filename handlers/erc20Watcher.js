@@ -1,5 +1,6 @@
 const WebSocket = require('ws');
 const { sendTelegramMessage } = require('../telegram');
+const { saveToHistory } = require('../src/utils/historyLogger');
 const tokens = require('../database/tokens.json');
 const { isImportantWallet } = require('../src/utils/importantWallets');
 const settings = require('../config/settings');
@@ -89,6 +90,15 @@ function startErc20Watcher() {
         const message = `🚀 ERC-20 Transfer >$${settings.MIN_TX_USD}: ${symbol} from: ${shortAddr(from)} to: ${shortAddr(to)}, value: ${amount}`;
         logDebug(message);
         await sendTelegramMessage(message);
+        saveToHistory({
+          timestamp: new Date().toISOString(),
+          hash: tx.hash,
+          from,
+          to,
+          tokenSymbol: symbol,
+          amount: amount.toString(),
+          usdValue: usdAmount,
+        });
       }
     } catch (err) {
       console.error('Ошибка обработки ERC-20 события:', err.message);

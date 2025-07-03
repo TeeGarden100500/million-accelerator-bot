@@ -1,5 +1,6 @@
 const WebSocket = require('ws');
 const { sendTelegramMessage } = require('./utils/telegram');
+const { saveToHistory } = require('./utils/historyLogger');
 const { isImportantWallet } = require('./utils/importantWallets');
 
 // Контракты, за которыми следим
@@ -86,6 +87,15 @@ function startAlchemyListener() {
       const message = `💸 ${formatEther(valueWei)} ETH от ${shortAddr(tx.from)} к ${name}\n🔗 https://etherscan.io/tx/${tx.hash}`;
       logDebug(message);
       await sendTelegramMessage(message);
+      saveToHistory({
+        timestamp: new Date().toISOString(),
+        hash: tx.hash,
+        from: tx.from,
+        to: tx.to,
+        tokenSymbol: 'ETH',
+        amount: formatEther(valueWei),
+        usdValue: 0,
+      });
     } catch (err) {
       console.error('Ошибка обработки события Alchemy:', err.message);
     }
