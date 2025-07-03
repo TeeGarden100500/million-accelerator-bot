@@ -1,19 +1,13 @@
 require('dotenv').config();
-const { Telegraf } = require('telegraf');
 const express = require('express');
 
-const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 const app = express();
 const PORT = process.env.PORT || 10000;
 const { startErc20Watcher } = require('./handlers/erc20Watcher');
-
-bot.start((ctx) => ctx.reply('Добро пожаловать в Million Accelerator'));
-bot.command('ping', (ctx) => ctx.reply('pong'));
+const { launchBot } = require('./handlers/telegramHandler');
 
 // Запуск Telegram-бота
-bot.launch().then(() => {
-  console.log('🤖 Telegram bot started');
-});
+launchBot();
 
 startErc20Watcher();
 
