@@ -15,4 +15,8 @@ async function sendTelegramMessage(message) {
   }
 }
 
-module.exports = { sendTelegramMessage };
+async function sendTelegramAlert(message) {
+  await sendTelegramMessage(message);
+}
+
+module.exports = { sendTelegramMessage, sendTelegramAlert };
