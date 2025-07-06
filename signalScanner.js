@@ -3,32 +3,41 @@ function logDebug(msg) {
   if (DEBUG) console.log(msg);
 }
 
-let timer;
+const INTERVAL_MS = 60 * 1000; // 1 minute
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+let running = false;
 
 async function scanSignals() {
   logDebug('[signalScanner] scanning for signals');
   // TODO: implement real signal scanning logic
 }
 
-function scheduleNext() {
-  timer = setTimeout(async () => {
+async function runLoop() {
+  while (running) {
+    logDebug('[signalScanner] iteration start');
     try {
       await scanSignals();
+      logDebug('[signalScanner] iteration complete');
     } catch (err) {
       console.error('[signalScanner] scan error:', err.message);
     }
-    scheduleNext();
-  }, 60000); // run every minute
+    if (!running) break;
+    await delay(INTERVAL_MS);
+  }
+  logDebug('[signalScanner] loop stopped');
 }
 
 function startSignalScanner() {
+  if (running) return;
+  running = true;
   logDebug('[signalScanner] started');
-  scheduleNext();
+  runLoop();
 }
 
 function stopSignalScanner() {
-  if (timer) clearTimeout(timer);
-  logDebug('[signalScanner] stopped');
+  running = false;
+  logDebug('[signalScanner] stopping...');
 }
 
 process.on('uncaughtException', err => {

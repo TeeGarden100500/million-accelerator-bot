@@ -3,32 +3,41 @@ function logDebug(msg) {
   if (DEBUG) console.log(msg);
 }
 
-let timer;
+const INTERVAL_MS = 60 * 1000; // 1 minute
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+let running = false;
 
 async function performTasks() {
   logDebug('[backgroundWorker] performing background tasks');
   // TODO: implement actual tasks
 }
 
-function scheduleNext() {
-  timer = setTimeout(async () => {
+async function runLoop() {
+  while (running) {
+    logDebug('[backgroundWorker] iteration start');
     try {
       await performTasks();
+      logDebug('[backgroundWorker] iteration complete');
     } catch (err) {
       console.error('[backgroundWorker] task error:', err.message);
     }
-    scheduleNext();
-  }, 60000);
+    if (!running) break;
+    await delay(INTERVAL_MS);
+  }
+  logDebug('[backgroundWorker] loop stopped');
 }
 
 function startBackgroundWorker() {
+  if (running) return;
+  running = true;
   logDebug('[backgroundWorker] started');
-  scheduleNext();
+  runLoop();
 }
 
 function stopBackgroundWorker() {
-  if (timer) clearTimeout(timer);
-  logDebug('[backgroundWorker] stopped');
+  running = false;
+  logDebug('[backgroundWorker] stopping...');
 }
 
 process.on('uncaughtException', err => {
