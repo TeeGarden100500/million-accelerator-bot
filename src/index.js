@@ -10,6 +10,7 @@ const { startNewsShockResponse } = require('./strategies/newsShockResponse');
 const { startPumpReloadWatcher } = require('./strategies/pumpReloadStrategy');
 const { startSentimentHypeScanner } = require('./strategies/sentimentHypeScanner');
 const { startPortfolioHeatmap } = require('./strategies/portfolioHeatmap');
+const { startAutoRebalance } = require('./strategies/autoRebalance');
 
 startTokenMonitor();
 startHalvingMonitor();
@@ -20,3 +21,4 @@ startNewsShockResponse();
 startPumpReloadWatcher();
 startSentimentHypeScanner();
 startPortfolioHeatmap();
+startAutoRebalance();
