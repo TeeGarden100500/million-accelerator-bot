@@ -40,4 +40,9 @@ module.exports = {
     Number(process.env.PUMP_RELOAD_THRESHOLD) || 0.3,
   PUMP_RELOAD_WINDOW_DAYS:
     Number(process.env.PUMP_RELOAD_WINDOW_DAYS) || 5,
+  HYPE_SCORE_MIN_PRIORITY:
+    Number(process.env.HYPE_SCORE_MIN_PRIORITY) || 8.5,
+  HYPE_TOP_N: Number(process.env.HYPE_TOP_N) || 3,
+  HYPE_REFRESH_INTERVAL_HOURS:
+    Number(process.env.HYPE_REFRESH_INTERVAL_HOURS) || 12,
 };

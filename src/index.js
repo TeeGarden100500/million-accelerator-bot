@@ -8,6 +8,7 @@ const { startTokenScoringEngine } = require('./strategies/tokenScoringEngine');
 const { startDexActivityWatcher } = require('./strategies/dexActivityWatcher');
 const { startNewsShockResponse } = require('./strategies/newsShockResponse');
 const { startPumpReloadWatcher } = require('./strategies/pumpReloadStrategy');
+const { startSentimentHypeScanner } = require('./strategies/sentimentHypeScanner');
 
 startTokenMonitor();
 startHalvingMonitor();
@@ -16,3 +17,4 @@ startTokenScoringEngine();
 startDexActivityWatcher();
 startNewsShockResponse();
 startPumpReloadWatcher();
+startSentimentHypeScanner();
