@@ -40,7 +40,9 @@ function loadBlacklist() {
 
 async function fetchDexTokens() {
   try {
-    const { data } = await axios.get('https://api.dexscreener.com/latest/dex/tokens');
+    const url =
+      'https://api.dexscreener.com/latest/dex/tokens?chain=base';
+    const { data } = await axios.get(url);
     return data.pairs || data;
   } catch (err) {
     logDebug(`DexScreener API error: ${err.message}`);
@@ -96,8 +98,17 @@ async function selectTopTokens() {
       continue;
     }
 
+    const holders = Number(t.holders || t.baseToken?.holders || 0);
+    if (!holders || holders < 1000) {
+      logDebug(`Reject ${address} holders ${holders}`);
+      continue;
+    }
+
     const gecko = await fetchGeckoInfo(address);
-    if (!gecko) continue;
+    if (!gecko) {
+      logDebug(`Reject ${address} - no CoinGecko data`);
+      continue;
+    }
 
     const marketCap = gecko.market_data?.market_cap?.usd || gecko.market_data?.fully_diluted_valuation?.usd || 0;
     if (marketCap < 5000000 || marketCap > 200000000) {
@@ -111,7 +122,9 @@ async function selectTopTokens() {
       continue;
     }
 
-    const age = tokenAgeDays(gecko.genesis_date || gecko.date_added);
+    const age = tokenAgeDays(
+      gecko.genesis_date || gecko.date_added || t.pairCreatedAt
+    );
     if (age === null || age < 90 || age > 180) {
       logDebug(`Reject ${address} age ${age}`);
       continue;
@@ -123,8 +136,11 @@ async function selectTopTokens() {
 
   if (result.length) {
     saveJSON(TOP_TOKENS_FILE, result);
+    return result;
   }
-  return result;
+
+  logDebug('No tokens selected - returning cached list');
+  return loadCachedTokens();
 }
 
 function startSelector() {
