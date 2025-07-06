@@ -31,4 +31,9 @@ module.exports = {
   NEWS_ALARM_THRESHOLD: Number(process.env.NEWS_ALARM_THRESHOLD) || 3,
   NEWS_SPAM_INTERVAL_MINUTES:
     Number(process.env.NEWS_SPAM_INTERVAL_MINUTES) || 30,
+  UNLOCK_LOOKAHEAD_DAYS: Number(process.env.UNLOCK_LOOKAHEAD_DAYS) || 7,
+  UNLOCK_MIN_PERCENT: Number(process.env.UNLOCK_MIN_PERCENT) || 1.0,
+  UNLOCK_MIN_USD: Number(process.env.UNLOCK_MIN_USD) || 1_000_000,
+  UNLOCK_SPAM_INTERVAL_HOURS:
+    Number(process.env.UNLOCK_SPAM_INTERVAL_HOURS) || 24,
 };
