@@ -54,4 +54,9 @@ module.exports = {
   PHRB_SNAPSHOT_HOUR_UTC: Number(process.env.PHRB_SNAPSHOT_HOUR_UTC) || 7,
   PHRB_MAX_RISK: Number(process.env.PHRB_MAX_RISK) || 0.3,
   PHRB_MIN_GAIN_TO_HOLD: Number(process.env.PHRB_MIN_GAIN_TO_HOLD) || 0.05,
+  REBALANCE_INTERVAL_HOURS:
+    Number(process.env.REBALANCE_INTERVAL_HOURS) || 24,
+  MIN_PROFIT_TO_KEEP: Number(process.env.MIN_PROFIT_TO_KEEP) || 0.1,
+  COMBO_SIGNAL_EXPIRY_DAYS:
+    Number(process.env.COMBO_SIGNAL_EXPIRY_DAYS) || 7,
 };
