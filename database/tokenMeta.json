@@ -1,0 +1,5 @@
+[
+  { "symbol": "ZRO", "unlockInDays": 2, "tags": ["NegNews"], "priceChange24h": -23, "volumeChange3d": -58 },
+  { "symbol": "KAS", "unlockInDays": 5, "tags": [], "priceChange24h": -5, "volumeChange3d": -10 },
+  { "symbol": "JUP", "unlockInDays": 10, "tags": ["BadPR"], "priceChange24h": 1, "volumeChange3d": -60 }
+]

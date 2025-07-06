@@ -13,6 +13,7 @@ const { startPortfolioHeatmap } = require('./strategies/portfolioHeatmap');
 const { startAutoRebalance } = require('./strategies/autoRebalance');
 const { startProfitTracker } = require('./strategies/profitTracker');
 const { startCapitalAllocator } = require('./strategies/capitalAllocator');
+const { startRiskAlerts } = require('./strategies/riskAlerts');
 
 startTokenMonitor();
 startHalvingMonitor();
@@ -26,3 +27,4 @@ startPortfolioHeatmap();
 startAutoRebalance();
 startProfitTracker();
 startCapitalAllocator();
+startRiskAlerts();
