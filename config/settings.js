@@ -14,4 +14,10 @@ module.exports = {
     Number(process.env.STAKING_TRACK_INTERVAL_HOURS) || 12,
   TOKEN_SCORING_INTERVAL_HOURS:
     Number(process.env.TOKEN_SCORING_INTERVAL_HOURS) || 12,
+  DEX_ACTIVITY_INTERVAL_MINUTES:
+    Number(process.env.DEX_ACTIVITY_INTERVAL_MINUTES) || 30,
+  DEX_VOLUME_THRESHOLD: Number(process.env.DEX_VOLUME_THRESHOLD) || 3.0,
+  DEX_LIQUIDITY_THRESHOLD:
+    Number(process.env.DEX_LIQUIDITY_THRESHOLD) || 0.5,
+  DEX_MIN_TRADERS: Number(process.env.DEX_MIN_TRADERS) || 20,
 };
