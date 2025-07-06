@@ -7,6 +7,7 @@ const { startStakingTracker } = require('./strategies/stakingTracker');
 const { startTokenScoringEngine } = require('./strategies/tokenScoringEngine');
 const { startDexActivityWatcher } = require('./strategies/dexActivityWatcher');
 const { startNewsShockResponse } = require('./strategies/newsShockResponse');
+const { startPumpReloadWatcher } = require('./strategies/pumpReloadStrategy');
 
 startTokenMonitor();
 startHalvingMonitor();
@@ -14,3 +15,4 @@ startStakingTracker();
 startTokenScoringEngine();
 startDexActivityWatcher();
 startNewsShockResponse();
+startPumpReloadWatcher();

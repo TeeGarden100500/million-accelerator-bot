@@ -36,4 +36,8 @@ module.exports = {
   UNLOCK_MIN_USD: Number(process.env.UNLOCK_MIN_USD) || 1_000_000,
   UNLOCK_SPAM_INTERVAL_HOURS:
     Number(process.env.UNLOCK_SPAM_INTERVAL_HOURS) || 24,
+  PUMP_RELOAD_THRESHOLD:
+    Number(process.env.PUMP_RELOAD_THRESHOLD) || 0.3,
+  PUMP_RELOAD_WINDOW_DAYS:
+    Number(process.env.PUMP_RELOAD_WINDOW_DAYS) || 5,
 };
