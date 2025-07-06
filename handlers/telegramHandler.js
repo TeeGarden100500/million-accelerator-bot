@@ -8,14 +8,26 @@ bot.command('ping', (ctx) => ctx.reply('pong'));
 
 let isLaunched = false;
 
-function launchBot(options = {}) {
-  if (isLaunched) {
-    console.warn('⚠️ Telegram bot is already running. Ignoring repeated launch.');
+async function launchBot(options = {}) {
+  if (isLaunched || bot.polling) {
+    console.warn('⚠️ Bot already running — skipping launch');
     return;
   }
-  bot.launch(options);
-  isLaunched = true;
-  sendAlert('📢 Бот успешно запущен. Начинаем мониторинг токенов...');
+  try {
+    await bot.launch(options);
+    isLaunched = true;
+    sendAlert('📢 Бот успешно запущен. Начинаем мониторинг токенов...');
+  } catch (err) {
+    if (
+      (err.code === 'ETELEGRAM' && err.response?.error_code === 409) ||
+      String(err).includes('409')
+    ) {
+      console.warn('⚠️ Bot already running — skipping launch');
+    } else {
+      console.error('Telegram bot launch failed:', err.message);
+      throw err;
+    }
+  }
 }
 
 module.exports = { launchBot, bot };
