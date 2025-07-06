@@ -57,6 +57,16 @@ async function refreshTokens() {
   logSelectedTokens();
 }
 
+function getTokenList() {
+  try {
+    const data = fs.readFileSync(TOP_TOKENS_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (err) {
+    logDebug(`Failed to load token list: ${err.message}`);
+    return [];
+  }
+}
+
 async function startRealScan() {
   if (settings.USE_MOCK_TOKENS) {
     console.log('[SCANNER] Mock tokens enabled. realTokenScan skipped.');
@@ -77,4 +87,4 @@ if (require.main === module) {
   startRealScan();
 }
 
-module.exports = { startRealScan };
+module.exports = { startRealScan, getTokenList };
