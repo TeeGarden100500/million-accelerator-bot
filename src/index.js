@@ -12,6 +12,7 @@ const { startSentimentHypeScanner } = require('./strategies/sentimentHypeScanner
 const { startPortfolioHeatmap } = require('./strategies/portfolioHeatmap');
 const { startAutoRebalance } = require('./strategies/autoRebalance');
 const { startProfitTracker } = require('./strategies/profitTracker');
+const { startCapitalAllocator } = require('./strategies/capitalAllocator');
 
 startTokenMonitor();
 startHalvingMonitor();
@@ -24,3 +25,4 @@ startSentimentHypeScanner();
 startPortfolioHeatmap();
 startAutoRebalance();
 startProfitTracker();
+startCapitalAllocator();
