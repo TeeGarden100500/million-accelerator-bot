@@ -140,7 +140,11 @@ async function selectTopTokens() {
   }
 
   logDebug('No tokens selected - returning cached list');
-  return loadCachedTokens();
+  const cached = loadCachedTokens();
+  if (!cached.length) {
+    console.warn('[TOP-TOKENS] ⚠️ Пустой список токенов.');
+  }
+  return cached;
 }
 
 function startSelector() {
