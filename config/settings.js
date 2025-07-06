@@ -45,4 +45,10 @@ module.exports = {
   HYPE_TOP_N: Number(process.env.HYPE_TOP_N) || 3,
   HYPE_REFRESH_INTERVAL_HOURS:
     Number(process.env.HYPE_REFRESH_INTERVAL_HOURS) || 12,
+  SPM_UPDATE_INTERVAL_HOURS:
+    Number(process.env.SPM_UPDATE_INTERVAL_HOURS) || 12,
+  SPM_PROFIT_THRESHOLD_CAUTION:
+    Number(process.env.SPM_PROFIT_THRESHOLD_CAUTION) || 0.5,
+  SPM_PROFIT_THRESHOLD_EXIT:
+    Number(process.env.SPM_PROFIT_THRESHOLD_EXIT) || -0.25,
 };
