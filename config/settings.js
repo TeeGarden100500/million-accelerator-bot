@@ -20,4 +20,15 @@ module.exports = {
   DEX_LIQUIDITY_THRESHOLD:
     Number(process.env.DEX_LIQUIDITY_THRESHOLD) || 0.5,
   DEX_MIN_TRADERS: Number(process.env.DEX_MIN_TRADERS) || 20,
+  RSS_SOURCES: (process.env.RSS_SOURCES
+    ? process.env.RSS_SOURCES.split(',')
+    : [
+        'https://cointelegraph.com/rss',
+        'https://decrypt.co/feed',
+        'https://whalewire.com/feed',
+        'https://watcherguru.com/feed',
+      ]),
+  NEWS_ALARM_THRESHOLD: Number(process.env.NEWS_ALARM_THRESHOLD) || 3,
+  NEWS_SPAM_INTERVAL_MINUTES:
+    Number(process.env.NEWS_SPAM_INTERVAL_MINUTES) || 30,
 };
