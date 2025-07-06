@@ -20,23 +20,58 @@ async function scanToken(token) {
   }
 }
 
-async function startScannerLoop(tokens = defaultTokens) {
+let isScanning = false;
+
+async function startTokenScanCycle(tokens = defaultTokens) {
   if (!tokens.length) {
     console.error('[ERROR] Список токенов пуст. Останавливаем анализ.');
     return;
   }
 
   console.log('🚀 Запускаем цикл анализа токенов...');
-  while (true) {
-    for (const token of tokens) {
-      await scanToken(token);
-      await delay(10000); // 10 секунд между токенами
-    }
+  for (const token of tokens) {
+    await scanToken(token);
+    await delay(10000); // 10 секунд между токенами
   }
 }
 
-if (require.main === module) {
-  startScannerLoop();
+function startScheduledTokenScan() {
+  console.log('[SCHEDULER] ⏳ Запускаем отложенный анализ токенов...');
+  const run = async () => {
+    if (isScanning) {
+      console.warn('[SCHEDULER] ⚠️ Анализ уже выполняется. Пропускаем запуск.');
+      return;
+    }
+
+    let tokens = [];
+    try {
+      // eslint-disable-next-line global-require
+      tokens = require('../../data/top-tokens.json');
+    } catch (err) {
+      console.error('[SCHEDULER] ❌ Ошибка загрузки токенов:', err.message);
+      return;
+    }
+
+    if (!tokens.length) {
+      console.warn('[SCHEDULER] ⚠️ Пустой список токенов. Пропускаем итерацию.');
+      return;
+    }
+
+    console.log(`[SCHEDULER] 🔁 Анализируем ${tokens.length} токенов...`);
+    isScanning = true;
+    try {
+      await startTokenScanCycle(tokens);
+    } finally {
+      isScanning = false;
+    }
+  };
+
+  run();
+  setInterval(run, 5 * 60 * 1000); // каждые 5 минут
 }
 
-module.exports = { scanToken, startScannerLoop };
+if (require.main === module) {
+  startScheduledTokenScan();
+}
+
+module.exports = { scanToken, startTokenScanCycle, startScheduledTokenScan };
