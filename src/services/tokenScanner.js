@@ -1,8 +1,8 @@
 // 🔁 Циклический анализ токенов с логированием и Telegram-оповещением
 
-const tokens = [
-  "0xA5E59761eBD4436fa4d20E1A27c8a29FB2471Fc6", // DEGEN
-  "0x6982508145454Ce325DdBE47a25d4ec3d2311933"  // PEPE
+const defaultTokens = [
+  '0xA5E59761eBD4436fa4d20E1A27c8a29FB2471Fc6', // DEGEN
+  '0x6982508145454Ce325DdBE47a25d4ec3d2311933', // PEPE
 ];
 
 const { sendTelegramMessage } = require("../utils/telegram");
@@ -20,8 +20,13 @@ async function scanToken(token) {
   }
 }
 
-async function startScannerLoop() {
-  console.log("🚀 Запускаем цикл анализа токенов...");
+async function startScannerLoop(tokens = defaultTokens) {
+  if (!tokens.length) {
+    console.error('[ERROR] Список токенов пуст. Останавливаем анализ.');
+    return;
+  }
+
+  console.log('🚀 Запускаем цикл анализа токенов...');
   while (true) {
     for (const token of tokens) {
       await scanToken(token);
@@ -30,4 +35,8 @@ async function startScannerLoop() {
   }
 }
 
-startScannerLoop();
+if (require.main === module) {
+  startScannerLoop();
+}
+
+module.exports = { scanToken, startScannerLoop };
