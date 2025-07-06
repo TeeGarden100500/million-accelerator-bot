@@ -96,4 +96,8 @@ function startSentimentHypeScanner() {
   setInterval(analyzeHype, interval);
 }
 
-module.exports = { startSentimentHypeScanner, computeHypeScore };
+module.exports = {
+  startSentimentHypeScanner,
+  computeHypeScore,
+  fetchHypeData,
+};

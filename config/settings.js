@@ -51,4 +51,7 @@ module.exports = {
     Number(process.env.SPM_PROFIT_THRESHOLD_CAUTION) || 0.5,
   SPM_PROFIT_THRESHOLD_EXIT:
     Number(process.env.SPM_PROFIT_THRESHOLD_EXIT) || -0.25,
+  PHRB_SNAPSHOT_HOUR_UTC: Number(process.env.PHRB_SNAPSHOT_HOUR_UTC) || 7,
+  PHRB_MAX_RISK: Number(process.env.PHRB_MAX_RISK) || 0.3,
+  PHRB_MIN_GAIN_TO_HOLD: Number(process.env.PHRB_MIN_GAIN_TO_HOLD) || 0.05,
 };
