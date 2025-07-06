@@ -8,4 +8,6 @@ module.exports = {
     Number(process.env.PUMP_PROFIT_THRESHOLD_VOLUME) || 200,
   PUMP_PROFIT_THRESHOLD_PRICE:
     Number(process.env.PUMP_PROFIT_THRESHOLD_PRICE) || 20,
+  HALVING_ALERT_THRESHOLD_DAYS:
+    Number(process.env.HALVING_ALERT_THRESHOLD_DAYS) || 90,
 };
