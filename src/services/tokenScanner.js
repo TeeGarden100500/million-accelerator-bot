@@ -35,7 +35,7 @@ async function startTokenScanCycle(tokens = defaultTokens) {
   }
 }
 
-function startScheduledTokenScan() {
+function startScheduledTokenScan(initialTokens) {
   console.log('[SCHEDULER] ⏳ Запускаем отложенный анализ токенов...');
   const run = async () => {
     if (isScanning) {
@@ -43,13 +43,16 @@ function startScheduledTokenScan() {
       return;
     }
 
-    let tokens = [];
-    try {
-      // eslint-disable-next-line global-require
-      tokens = require('../../data/top-tokens.json');
-    } catch (err) {
-      console.error('[SCHEDULER] ❌ Ошибка загрузки токенов:', err.message);
-      return;
+    let tokens = Array.isArray(initialTokens) ? initialTokens : [];
+    initialTokens = null;
+    if (!tokens.length) {
+      try {
+        // eslint-disable-next-line global-require
+        tokens = require('../../data/top-tokens.json');
+      } catch (err) {
+        console.error('[SCHEDULER] ❌ Ошибка загрузки токенов:', err.message);
+        return;
+      }
     }
 
     if (!tokens.length) {
