@@ -12,4 +12,6 @@ module.exports = {
     Number(process.env.HALVING_ALERT_THRESHOLD_DAYS) || 90,
   STAKING_TRACK_INTERVAL_HOURS:
     Number(process.env.STAKING_TRACK_INTERVAL_HOURS) || 12,
+  TOKEN_SCORING_INTERVAL_HOURS:
+    Number(process.env.TOKEN_SCORING_INTERVAL_HOURS) || 12,
 };
