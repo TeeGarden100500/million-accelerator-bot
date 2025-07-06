@@ -6,12 +6,14 @@ const PORT = process.env.PORT || 10000;
 const { startErc20Watcher } = require('./handlers/erc20Watcher');
 const { launchBot } = require('./handlers/telegramHandler');
 const { startReportScheduler } = require('./reportScheduler');
+const { start: startSmartDeploymentManager } = require('./smartDeploymentManager');
 
 // Запуск Telegram-бота
 launchBot();
 
 startErc20Watcher();
 startReportScheduler();
+startSmartDeploymentManager();
 
 // Заглушка для Render
 app.get('/', (req, res) => {
