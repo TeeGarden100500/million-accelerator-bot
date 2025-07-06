@@ -5,6 +5,7 @@ const settings = require('../../config/settings');
 const { sendTelegramAlert } = require('../utils/telegram');
 const { fetchStakingEarnList } = require('./stakingTracker');
 const { fetchTokenList } = require('../../services/geckoService');
+const { generateSignal } = require('../signalGenerator');
 
 const DEBUG = process.env.DEBUG_LOG_LEVEL === 'debug';
 function logDebug(msg) {
@@ -120,6 +121,12 @@ async function evaluateTokens() {
       txHistory,
     });
     results.push(info);
+    await generateSignal({
+      token: token.symbol,
+      source: ['TokenScoringEngine'],
+      score: info.score,
+      reasons: info.reasons,
+    });
   }
 
   results.sort((a, b) => b.score - a.score);
