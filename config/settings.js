@@ -59,4 +59,7 @@ module.exports = {
   MIN_PROFIT_TO_KEEP: Number(process.env.MIN_PROFIT_TO_KEEP) || 0.1,
   COMBO_SIGNAL_EXPIRY_DAYS:
     Number(process.env.COMBO_SIGNAL_EXPIRY_DAYS) || 7,
+  PROFIT_TRACKER_HOUR_UTC: Number(process.env.PROFIT_TRACKER_HOUR_UTC) || 8,
+  PROFIT_TOP_TOKENS: Number(process.env.PROFIT_TOP_TOKENS) || 3,
+  PROFIT_BOTTOM_TOKENS: Number(process.env.PROFIT_BOTTOM_TOKENS) || 3,
 };

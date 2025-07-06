@@ -11,6 +11,7 @@ const { startPumpReloadWatcher } = require('./strategies/pumpReloadStrategy');
 const { startSentimentHypeScanner } = require('./strategies/sentimentHypeScanner');
 const { startPortfolioHeatmap } = require('./strategies/portfolioHeatmap');
 const { startAutoRebalance } = require('./strategies/autoRebalance');
+const { startProfitTracker } = require('./strategies/profitTracker');
 
 startTokenMonitor();
 startHalvingMonitor();
@@ -22,3 +23,4 @@ startPumpReloadWatcher();
 startSentimentHypeScanner();
 startPortfolioHeatmap();
 startAutoRebalance();
+startProfitTracker();
