@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const { sendTelegramAlert } = require('../utils/telegram');
+const { sendHeartbeat } = require('../../utils/moduleMonitor');
+const MODULE_NAME = 'riskAlerts.js';
 
 const DEBUG = process.env.DEBUG_LOG_LEVEL === 'debug';
 function logDebug(msg) {
@@ -63,6 +65,7 @@ function buildRiskList(symbol, meta) {
 }
 
 async function checkRisks() {
+  sendHeartbeat(MODULE_NAME);
   const metas = loadJson(META_PATH, []);
   const bySymbol = {};
   metas.forEach((m) => {
@@ -110,6 +113,8 @@ async function checkRisks() {
 function startRiskAlerts() {
   checkRisks();
   setInterval(checkRisks, 60 * 60 * 1000);
+  setInterval(() => sendHeartbeat(MODULE_NAME), 60 * 1000);
+  sendHeartbeat(MODULE_NAME);
 }
 
 module.exports = { startRiskAlerts, checkRisks };

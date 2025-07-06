@@ -2,6 +2,8 @@ const cron = require('node-cron');
 const fs = require('fs');
 const path = require('path');
 const { sendTelegramMessage } = require('./telegram');
+const { sendHeartbeat } = require('./utils/moduleMonitor');
+const MODULE_NAME = 'reportScheduler.js';
 
 const DEBUG = process.env.DEBUG_LOG_LEVEL === 'debug';
 function logDebug(msg) {
@@ -75,6 +77,7 @@ function buildReport(period) {
 }
 
 async function sendReport(period) {
+  sendHeartbeat(MODULE_NAME);
   const report = buildReport(period);
   saveReport(period, report);
 
@@ -106,6 +109,8 @@ function startReportScheduler() {
     cron.schedule(expr, () => sendReport(period));
   });
   logDebug('Report scheduler started');
+  sendHeartbeat(MODULE_NAME);
+  setInterval(() => sendHeartbeat(MODULE_NAME), 60 * 1000);
 }
 
 module.exports = { startReportScheduler };

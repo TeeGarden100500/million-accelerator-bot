@@ -3,6 +3,9 @@ function logDebug(msg) {
   if (DEBUG) console.log(msg);
 }
 
+const { sendHeartbeat } = require('./utils/moduleMonitor');
+const MODULE_NAME = 'signalScanner.js';
+
 const INTERVAL_MS = 60 * 1000; // 1 minute
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -22,6 +25,7 @@ async function runLoop() {
     } catch (err) {
       console.error('[signalScanner] scan error:', err.message);
     }
+    sendHeartbeat(MODULE_NAME);
     if (!running) break;
     await delay(INTERVAL_MS);
   }
@@ -32,6 +36,7 @@ function startSignalScanner() {
   if (running) return;
   running = true;
   logDebug('[signalScanner] started');
+  sendHeartbeat(MODULE_NAME);
   runLoop();
 }
 

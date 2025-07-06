@@ -2,6 +2,7 @@ const { fork } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const { sendTelegramMessage } = require('./telegram');
+const { logRecovery } = require('./utils/moduleMonitor');
 
 const CHECK_INTERVAL = 10 * 60 * 1000; // 10 minutes
 const LOG_FILE = path.join(__dirname, 'logs', 'uptime.log');
@@ -48,6 +49,7 @@ const workers = [
 workers.forEach(w => {
   w.process = null;
   w.attempts = 0;
+  w.lastHeartbeat = Date.now();
 });
 
 const restartHistory = loadRestarts();
@@ -58,11 +60,24 @@ function spawnWorker(worker) {
     return;
   }
   try {
+    if (worker.process && isRunning(worker.process)) {
+      return;
+    }
     worker.process = fork(worker.script);
     worker.attempts = 0;
+    worker.lastHeartbeat = Date.now();
+    worker.process.on('message', msg => {
+      if (msg && msg.type === 'heartbeat') {
+        worker.lastHeartbeat = Date.now();
+      }
+    });
+    worker.process.on('exit', (code, signal) => {
+      logRecovery(`${worker.name} exited with code ${code} signal ${signal}`);
+    });
     log(`${worker.name} started (pid ${worker.process.pid})`);
   } catch (err) {
     log(`${worker.name} failed to start: ${err.message}`);
+    logRecovery(`${worker.name} failed to start: ${err.message}`);
   }
 }
 
@@ -77,9 +92,10 @@ function recordRestart(worker, success) {
   saveRestarts(restartHistory);
 }
 
-function restartWorker(worker) {
+function restartWorker(worker, reason = 'unresponsive') {
   worker.attempts += 1;
   log(`Restarting ${worker.name}, attempt ${worker.attempts}`);
+  logRecovery(`${worker.name} restarting: ${reason}`);
   const header = `❗ Модуль ${worker.name} перестал отвечать.\n🔄 Попытка перезапуска...`;
   if (worker.process) {
     try { worker.process.kill(); } catch (_) {}
@@ -89,6 +105,9 @@ function restartWorker(worker) {
   recordRestart(worker, success);
   const status = success ? '✅ Перезапуск успешен.' : '❌ Перезапуск неудачен.';
   sendTelegramMessage(`${header}\n${status}`).catch(() => {});
+  if (!success && worker.attempts < 3) {
+    setTimeout(() => restartWorker(worker, reason), 10000);
+  }
 }
 
 function isRunning(proc) {
@@ -97,8 +116,11 @@ function isRunning(proc) {
 
 function checkWorkers() {
   workers.forEach(worker => {
+    const now = Date.now();
     if (!isRunning(worker.process)) {
-      restartWorker(worker);
+      restartWorker(worker, 'stopped');
+    } else if (now - worker.lastHeartbeat > CHECK_INTERVAL) {
+      restartWorker(worker, 'no heartbeat');
     } else {
       log(`${worker.name} running (pid ${worker.process.pid})`);
     }
@@ -109,6 +131,7 @@ function start() {
   log('Smart Deployment Manager started');
   workers.forEach(spawnWorker);
   setInterval(checkWorkers, CHECK_INTERVAL);
+  checkWorkers();
 }
 
 module.exports = { start };
