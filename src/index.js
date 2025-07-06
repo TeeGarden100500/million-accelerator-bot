@@ -14,6 +14,7 @@ const { startAutoRebalance } = require('./strategies/autoRebalance');
 const { startProfitTracker } = require('./strategies/profitTracker');
 const { startCapitalAllocator } = require('./strategies/capitalAllocator');
 const { startRiskAlerts } = require('./strategies/riskAlerts');
+const { startAiSupervisor } = require('./aiSupervisor');
 
 startTokenMonitor();
 startHalvingMonitor();
@@ -28,3 +29,4 @@ startAutoRebalance();
 startProfitTracker();
 startCapitalAllocator();
 startRiskAlerts();
+startAiSupervisor();
