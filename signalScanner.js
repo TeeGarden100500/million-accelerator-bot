@@ -4,6 +4,11 @@ function logDebug(msg) {
 }
 
 const { sendHeartbeat } = require('./utils/moduleMonitor');
+const { sendTelegramAlert } = require('./telegram');
+const { fetchTokenList } = require('./services/geckoService');
+const { getTokenList } = require('./services/realTokenScan');
+const settings = require('./config/settings');
+const { updatePrice } = require('./src/strategies/pumpReloadStrategy');
 const MODULE_NAME = 'signalScanner.js';
 
 const INTERVAL_MS = 60 * 1000; // 1 minute
@@ -13,7 +18,51 @@ let running = false;
 
 async function scanSignals() {
   logDebug('[signalScanner] scanning for signals');
-  // TODO: implement real signal scanning logic
+  let tokens = [];
+  try {
+    tokens = await getTokenList();
+  } catch (err) {
+    console.error('[signalScanner] failed to get token list:', err.message);
+    return;
+  }
+
+  if (!tokens.length) {
+    logDebug('[signalScanner] no tokens to scan');
+    return;
+  }
+
+  let marketData = [];
+  try {
+    marketData = await fetchTokenList();
+  } catch (err) {
+    console.error('[signalScanner] market data fetch error:', err.message);
+  }
+
+  for (const token of tokens) {
+    const data = marketData.find(
+      (d) => d.symbol && d.symbol.toUpperCase() === token.symbol.toUpperCase()
+    );
+    if (!data) continue;
+
+    const priceChangePercent = Number(data.change24h) || 0;
+    const volumeChangePercent = data.marketCap
+      ? Number(((data.volume / data.marketCap) * 100).toFixed(2))
+      : 0;
+
+    updatePrice(token.symbol, data.price);
+
+    if (
+      priceChangePercent >= settings.PUMP_PROFIT_THRESHOLD_PRICE &&
+      volumeChangePercent >= settings.PUMP_PROFIT_THRESHOLD_VOLUME
+    ) {
+      const text =
+        `[\uD83D\uDE80 SIGNAL] Токен: ${token.symbol} (${token.name || token.symbol})\n` +
+        `Стратегия: PumpProfitSniper\n` +
+        `Краткий совет: Рост цены и объёма, возможен памп`;
+      logDebug(`Pump signal for ${token.symbol}`);
+      await sendTelegramAlert(text);
+    }
+  }
 }
 
 async function runLoop() {
