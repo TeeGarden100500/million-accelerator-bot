@@ -10,10 +10,10 @@ const TOKENS = [];
 async function analyzeTokens() {
   for (const token of TOKENS) {
     try {
-      const url = `https://api.dexscreener.com/latest/dex/tokens/${token.address}`;
-      const res = await axios.get(url);
-
-      const data = res.data.pairs?.[0];
+      const res = await axios.get('https://api.dexscreener.com/latest/dex/pairs');
+      const data = res.data.pairs.find(
+        (p) => p.baseToken.address.toLowerCase() === token.address.toLowerCase()
+      );
       if (!data) continue;
 
       const volume24h = parseFloat(data.volume?.h24Usd || 0);

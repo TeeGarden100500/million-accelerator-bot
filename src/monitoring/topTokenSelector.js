@@ -72,7 +72,7 @@ function loadBlacklist() {
 
 async function fetchDexTokens() {
   try {
-    const url = 'https://api.dexscreener.com/latest/dex/tokens';
+    const url = 'https://api.dexscreener.com/latest/dex/pairs';
     const { data } = await fetchWithRetry(url);
     return data.pairs || data;
   } catch (err) {
