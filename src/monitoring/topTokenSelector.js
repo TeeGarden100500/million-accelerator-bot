@@ -67,8 +67,7 @@ function loadBlacklist() {
 
 async function fetchDexTokens() {
   try {
-    const url =
-      'https://api.dexscreener.com/latest/dex/tokens?chain=base';
+    const url = 'https://api.dexscreener.com/latest/dex/tokens';
     const { data } = await fetchWithRetry(url);
     return data.pairs || data;
   } catch (err) {
@@ -118,8 +117,15 @@ async function selectTopTokens() {
   for (const t of dexTokens) {
     if (result.length >= MAX_TOKENS) break;
     const address = t?.baseToken?.address?.toLowerCase();
-    if (!address) continue;
-    if (t.chainId && t.chainId.toLowerCase() !== 'base') continue;
+    if (!address || address.startsWith('0x0000000000000000000000000000000000000000')) {
+      continue;
+    }
+    if (
+      t.chainId &&
+      !['eth', 'ethereum', 'bsc'].includes(t.chainId.toLowerCase())
+    ) {
+      continue;
+    }
     if (blacklist.has(address)) {
       logDebug(`Skip ${address} - blacklisted`);
       continue;

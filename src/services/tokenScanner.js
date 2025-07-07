@@ -3,10 +3,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const defaultTokens = [
-  '0xA5E59761eBD4436fa4d20E1A27c8a29FB2471Fc6', // DEGEN
-  '0x6982508145454Ce325DdBE47a25d4ec3d2311933', // PEPE
-];
+// default token list is empty by default and will be loaded from file
+const defaultTokens = [];
 
 const { sendTelegramMessage } = require('../utils/telegram');
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -21,13 +19,23 @@ function logDebug(msg) {
 async function loadTokensFromFile() {
   try {
     const raw = fs.readFileSync(TOP_TOKENS_FILE, 'utf8');
-    const list = JSON.parse(raw);
-    const count = Array.isArray(list) ? list.length : 0;
-    logDebug(`Загружено ${count} токенов из файла.`);
-    if (count) {
-      await sendTelegramMessage(`\uD83E\uDDE0 Загружено ${count} токенов из DexScreener`);
+    let list = JSON.parse(raw);
+    if (!Array.isArray(list)) list = [];
+    const filtered = Array.from(
+      new Set(
+        list.filter(
+          (a) =>
+            typeof a === 'string' &&
+            a.toLowerCase().startsWith('0x') &&
+            !a.startsWith('0x0000000000000000000000000000000000000000')
+        ).map((a) => a.toLowerCase())
+      )
+    );
+    logDebug(`Загружено ${filtered.length} токенов из файла.`);
+    if (filtered.length) {
+      await sendTelegramMessage(`\uD83E\uDDE0 Загружено ${filtered.length} токенов из DexScreener`);
     }
-    return count ? list : [];
+    return filtered;
   } catch (err) {
     const msg = `Ошибка при загрузке токенов: ${err.message}`;
     console.error(`[SCANNER] ${msg}`);
@@ -51,7 +59,7 @@ async function scanToken(token) {
 let isScanning = false;
 
 async function startTokenScanCycle(tokens = defaultTokens) {
-  if (!tokens.length) {
+  if (!Array.isArray(tokens) || !tokens.length) {
     console.warn('TokenScanner получил пустой массив. Анализ не запущен.');
     await sendTelegramMessage('TokenScanner получил пустой массив. Анализ не запущен.');
     return;
