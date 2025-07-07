@@ -3,11 +3,8 @@ const { sendTelegramMessage, sendTelegramAlert } = require('./telegram');
 const { checkPumpSignal } = require('./src/strategies/pumpProfitSniper');
 const settings = require('./config/settings');
 
-// Токены для мониторинга
-const TOKENS = [
-  { name: 'PEPE', address: '0x6982508145454Ce325dDbE47a25d4ec3d2311933' },
-  { name: 'DEGEN', address: '0xA5E59761eBD4436fa4d20E1A27cBa29FB2471Fc6' },
-];
+// Токены для мониторинга (можно заполнить адресами при необходимости)
+const TOKENS = [];
 
 // Проверяем объем торгов через Dexscreener
 async function analyzeTokens() {
