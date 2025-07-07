@@ -2,10 +2,14 @@ const fs = require('fs');
 const path = require('path');
 const { fetchTokenList } = require('./geckoService');
 const { scanToken } = require('./tokenScanner');
+const { sendTelegramMessage } = require('../telegram');
 const settings = require('../config/settings');
 
-const TOP_TOKENS_FILE = path.join(__dirname, '..', 'data', 'top-tokens.json');
-const UPDATE_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours
+const TOP_TOKENS_FILE = process.env.TOP_TOKENS_JSON ||
+  path.join(__dirname, '..', 'data', 'top-tokens.json');
+const UPDATE_INTERVAL =
+  (Number(process.env.TOKEN_REFRESH_INTERVAL_MINUTES) || 240) * 60 * 1000;
+const LOG_TO_TELEGRAM = String(process.env.LOG_TO_TELEGRAM || 'true') !== 'false';
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 const DEBUG = process.env.DEBUG_LOG_LEVEL === 'debug';
 
@@ -37,6 +41,8 @@ async function updateTokensFromApi() {
       }));
       fs.writeFileSync(TOP_TOKENS_FILE, JSON.stringify(normalized, null, 2));
       tokens = normalized.map((t) => t.address);
+    } else {
+      console.error('[SCANNER] Получен пустой список токенов');
     }
   } catch (err) {
     logDebug(`Token API update failed: ${err.message}`);
@@ -53,7 +59,13 @@ function logSelectedTokens() {
 
 async function refreshTokens() {
   await updateTokensFromApi();
-  if (!tokens.length) loadTokensFromFile();
+  if (!tokens.length) {
+    console.error('[SCANNER] Получен пустой список токенов. Пропускаем итерацию.');
+    if (LOG_TO_TELEGRAM) {
+      await sendTelegramMessage('❌ Получен пустой список токенов. Пропускаем итерацию.');
+    }
+    loadTokensFromFile();
+  }
   logSelectedTokens();
 }
 
