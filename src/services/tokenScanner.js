@@ -10,7 +10,10 @@ const { sendTelegramMessage } = require('../utils/telegram');
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const DEBUG = process.env.DEBUG_LOG_LEVEL === 'debug';
-const TOP_TOKENS_FILE = path.join(__dirname, '..', '..', 'data', 'top-tokens.json');
+const LOG_TO_TELEGRAM = String(process.env.LOG_TO_TELEGRAM || 'true') !== 'false';
+const LOG_ANALYSIS_RESULT = String(process.env.LOG_ANALYSIS_RESULT || 'true') !== 'false';
+const TOP_TOKENS_FILE = process.env.TOP_TOKENS_JSON ||
+  path.join(__dirname, '..', '..', 'data', 'top-tokens.json');
 
 function logDebug(msg) {
   if (DEBUG) console.log(`[SCANNER] ${msg}`);
@@ -33,13 +36,17 @@ async function loadTokensFromFile() {
     );
     logDebug(`Загружено ${filtered.length} токенов из файла.`);
     if (filtered.length) {
-      await sendTelegramMessage(`\uD83E\uDDE0 Загружено ${filtered.length} токенов из DexScreener`);
+      if (LOG_TO_TELEGRAM) {
+        await sendTelegramMessage(`\uD83E\uDDE0 Загружено ${filtered.length} токенов из DexScreener`);
+      }
     }
     return filtered;
   } catch (err) {
     const msg = `Ошибка при загрузке токенов: ${err.message}`;
     console.error(`[SCANNER] ${msg}`);
-    await sendTelegramMessage(`❗ ${msg}`);
+    if (LOG_TO_TELEGRAM) {
+      await sendTelegramMessage(`❗ ${msg}`);
+    }
     return [];
   }
 }
@@ -49,10 +56,14 @@ async function scanToken(token) {
     console.log(`[SCAN] \uD83D\uDCCA Анализируем токен: ${token}`);
     await delay(1000);
     console.log(`[SCAN] \u2705 Анализ завершён: ${token}`);
-    await sendTelegramMessage(`Анализ токена ${token} завершён \u2705`);
+    if (LOG_TO_TELEGRAM && LOG_ANALYSIS_RESULT) {
+      await sendTelegramMessage(`Анализ токена ${token} завершён \u2705`);
+    }
   } catch (err) {
     console.error(`[SCAN ERROR] Ошибка при анализе токена ${token}: ${err.message}`);
-    await sendTelegramMessage(`❌ Ошибка при анализе токена:\n${token}\n${err.message}`);
+    if (LOG_TO_TELEGRAM) {
+      await sendTelegramMessage(`❌ Ошибка при анализе токена:\n${token}\n${err.message}`);
+    }
   }
 }
 
@@ -61,7 +72,9 @@ let isScanning = false;
 async function startTokenScanCycle(tokens = defaultTokens) {
   if (!Array.isArray(tokens) || !tokens.length) {
     console.warn('TokenScanner получил пустой массив. Анализ не запущен.');
-    await sendTelegramMessage('TokenScanner получил пустой массив. Анализ не запущен.');
+    if (LOG_TO_TELEGRAM) {
+      await sendTelegramMessage('TokenScanner получил пустой массив. Анализ не запущен.');
+    }
     return;
   }
 
@@ -101,8 +114,9 @@ function startScheduledTokenScan(initialTokens) {
     }
   };
 
+  const intervalMin = Number(process.env.TOKEN_SCAN_INTERVAL_MINUTES) || 5;
   run();
-  setInterval(run, 5 * 60 * 1000); // каждые 5 минут
+  setInterval(run, intervalMin * 60 * 1000);
 }
 
 if (require.main === module) {

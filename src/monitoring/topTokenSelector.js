@@ -3,11 +3,16 @@ const path = require('path');
 const axios = require('axios');
 const { sendTelegramMessage } = require('../utils/telegram');
 
-const TOP_TOKENS_FILE = path.join(__dirname, '..', '..', 'data', 'top-tokens.json');
+const TOP_TOKENS_FILE = process.env.TOP_TOKENS_JSON ||
+  path.join(__dirname, '..', '..', 'data', 'top-tokens.json');
 const BLACKLIST_FILE = path.join(__dirname, '..', '..', 'config', 'blacklist.json');
 
-const REFRESH_INTERVAL_HOURS = Number(process.env.TOP_TOKEN_REFRESH_HOURS) || 6;
+const REFRESH_INTERVAL_MIN = Number(process.env.TOKEN_REFRESH_INTERVAL_MINUTES) || 60;
 const MAX_TOKENS = 20;
+const MIN_HOLDERS = Number(process.env.MIN_HOLDERS) || 200;
+const MIN_AGE = Number(process.env.TOKEN_MIN_AGE_DAYS) || 90;
+const MAX_AGE = Number(process.env.TOKEN_MAX_AGE_DAYS) || 180;
+const EXCLUDE_SCAM_TAGS = String(process.env.EXCLUDE_SCAM_TAGS || 'true') !== 'false';
 const DEBUG = process.env.DEBUG_LOG_LEVEL === 'debug';
 
 function logDebug(msg) {
@@ -108,9 +113,12 @@ function loadCachedTokens() {
 async function selectTopTokens() {
   const blacklist = loadBlacklist();
   const result = [];
+  logDebug(`\u2699\uFE0F Фильтруем токены: возраст ${MIN_AGE}-${MAX_AGE} дней, холдеров > ${MIN_HOLDERS}`);
   const dexTokens = await fetchDexTokens();
-  if (!dexTokens) {
-    logDebug('Using cached tokens due to DexScreener failure');
+  if (!dexTokens || !dexTokens.length) {
+    console.error('[TOP-TOKENS] Получен пустой список токенов');
+    await sendTelegramMessage('❌ Получен пустой список токенов. Пропускаем итерацию.');
+    logDebug('Using cached tokens due to DexScreener failure or empty list');
     return loadCachedTokens();
   }
 
@@ -138,8 +146,17 @@ async function selectTopTokens() {
       continue;
     }
 
+    if (
+      EXCLUDE_SCAM_TAGS &&
+      Array.isArray(t.tags) &&
+      t.tags.some((tag) => /scam/i.test(tag))
+    ) {
+      logDebug(`Reject ${address} - scam tag`);
+      continue;
+    }
+
     const holders = Number(t.holders || t.baseToken?.holders || 0);
-    if (!holders || holders < 1000) {
+    if (!holders || holders < MIN_HOLDERS) {
       logDebug(`Reject ${address} holders ${holders}`);
       continue;
     }
@@ -165,7 +182,7 @@ async function selectTopTokens() {
     const age = tokenAgeDays(
       gecko.genesis_date || gecko.date_added || t.pairCreatedAt
     );
-    if (age === null || age < 90 || age > 180) {
+    if (age === null || age < MIN_AGE || age > MAX_AGE) {
       logDebug(`Reject ${address} age ${age}`);
       continue;
     }
@@ -193,7 +210,7 @@ async function selectTopTokens() {
 
 function startSelector() {
   selectTopTokens();
-  setInterval(selectTopTokens, REFRESH_INTERVAL_HOURS * 60 * 60 * 1000);
+  setInterval(selectTopTokens, REFRESH_INTERVAL_MIN * 60 * 1000);
 }
 
 module.exports = { selectTopTokens, startSelector };

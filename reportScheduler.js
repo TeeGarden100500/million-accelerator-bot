@@ -5,9 +5,11 @@ const { sendTelegramMessage } = require('./telegram');
 const { sendHeartbeat } = require('./utils/moduleMonitor');
 const MODULE_NAME = 'reportScheduler.js';
 
-const TOP_TOKENS_FILE = path.join(__dirname, 'data', 'top-tokens.json');
+const TOP_TOKENS_FILE = process.env.TOP_TOKENS_JSON || path.join(__dirname, 'data', 'top-tokens.json');
 
 const DEBUG = process.env.DEBUG_LOG_LEVEL === 'debug';
+const LOG_TO_TELEGRAM = String(process.env.LOG_TO_TELEGRAM || 'true') !== 'false';
+const REPORT_INTERVAL_MIN = Number(process.env.REPORT_SCHEDULER_INTERVAL_MINUTES) || 0;
 function logDebug(msg) {
   if (DEBUG) console.log(msg);
 }
@@ -107,10 +109,14 @@ async function sendReport(period) {
     if (report.ideas)
       message += `Свежие идеи: ${report.ideas}\n`;
     logDebug(message.trim());
-    await sendTelegramMessage(message.trim());
+    if (LOG_TO_TELEGRAM) {
+      await sendTelegramMessage(message.trim());
+    }
   } catch (err) {
     console.error('[REPORT] Ошибка формирования отчёта:', err.message);
-    await sendTelegramMessage(`❗ Ошибка формирования отчёта: ${err.message}`);
+    if (LOG_TO_TELEGRAM) {
+      await sendTelegramMessage(`❗ Ошибка формирования отчёта: ${err.message}`);
+    }
   }
 }
 
@@ -118,7 +124,9 @@ function startReportScheduler() {
   if (!hasTokens()) {
     const msg = '[REPORT] top-tokens.json пуст, планировщик не запущен';
     console.warn(msg);
-    sendTelegramMessage(msg);
+    if (LOG_TO_TELEGRAM) {
+      sendTelegramMessage(msg);
+    }
     return;
   }
   const cronMap = {
@@ -131,6 +139,9 @@ function startReportScheduler() {
   Object.entries(cronMap).forEach(([period, expr]) => {
     cron.schedule(expr, () => sendReport(period));
   });
+  if (REPORT_INTERVAL_MIN > 0) {
+    setInterval(() => sendReport('weekly'), REPORT_INTERVAL_MIN * 60 * 1000);
+  }
   logDebug('Report scheduler started');
   sendHeartbeat(MODULE_NAME);
   setInterval(() => sendHeartbeat(MODULE_NAME), 60 * 1000);

@@ -5,6 +5,8 @@ const { sendHeartbeat } = require('../../utils/moduleMonitor');
 const MODULE_NAME = 'riskAlerts.js';
 
 const DEBUG = process.env.DEBUG_LOG_LEVEL === 'debug';
+const LOG_TO_TELEGRAM = String(process.env.LOG_TO_TELEGRAM || 'true') !== 'false';
+const RISK_INTERVAL_MIN = Number(process.env.RISK_ALERT_INTERVAL_MINUTES) || 60;
 function logDebug(msg) {
   if (DEBUG) console.log(msg);
 }
@@ -99,7 +101,9 @@ async function checkRisks() {
       '• Зафиксировать 50% позиции\n' +
       '• Отслеживать новостной фон';
     logDebug(`Risk alert for ${sym}\n${lines}`);
-    await sendTelegramAlert(message);
+    if (LOG_TO_TELEGRAM) {
+      await sendTelegramAlert(message);
+    }
 
     history[sym] = history[sym] || {};
     newRisks.forEach((r) => {
@@ -111,13 +115,15 @@ async function checkRisks() {
   if (updated) saveJson(SENT_PATH, history);
   } catch (err) {
     console.error('[RISK] Ошибка проверки рисков:', err.message);
-    await sendTelegramAlert(`❗ Ошибка riskAlerts: ${err.message}`);
+    if (LOG_TO_TELEGRAM) {
+      await sendTelegramAlert(`❗ Ошибка riskAlerts: ${err.message}`);
+    }
   }
 }
 
 function startRiskAlerts() {
   checkRisks();
-  setInterval(checkRisks, 60 * 60 * 1000);
+  setInterval(checkRisks, RISK_INTERVAL_MIN * 60 * 1000);
   setInterval(() => sendHeartbeat(MODULE_NAME), 60 * 1000);
   sendHeartbeat(MODULE_NAME);
 }
