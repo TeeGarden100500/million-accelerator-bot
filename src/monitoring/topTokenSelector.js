@@ -15,9 +15,31 @@ function logDebug(msg) {
   }
 }
 
+async function fetchWithRetry(url, opts = {}, retries = 3) {
+  for (let i = 0; i < retries; i += 1) {
+    try {
+      return await axios.get(url, opts);
+    } catch (err) {
+      const status = err.response?.status;
+      if ((status === 429 || status >= 500) && i < retries - 1) {
+        const delayMs = 1000 * (i + 1);
+        logDebug(`Retry ${url} in ${delayMs}ms due to ${status}`);
+        await new Promise((res) => setTimeout(res, delayMs));
+        continue;
+      }
+      throw err;
+    }
+  }
+  return null;
+}
+
 function readJSON(filePath, fallback) {
   try {
     const raw = fs.readFileSync(filePath, 'utf8');
+    if (!raw.trim()) {
+      logDebug(`File ${path.basename(filePath)} пуст`);
+      return fallback;
+    }
     return JSON.parse(raw);
   } catch (err) {
     logDebug(`Failed to read ${filePath}: ${err.message}`);
@@ -42,7 +64,7 @@ async function fetchDexTokens() {
   try {
     const url =
       'https://api.dexscreener.com/latest/dex/tokens?chain=base';
-    const { data } = await axios.get(url);
+    const { data } = await fetchWithRetry(url);
     return data.pairs || data;
   } catch (err) {
     logDebug(`DexScreener API error: ${err.message}`);
@@ -53,7 +75,7 @@ async function fetchDexTokens() {
 async function fetchGeckoInfo(address) {
   try {
     const url = `https://api.coingecko.com/api/v3/coins/ethereum/contract/${address}`;
-    const { data } = await axios.get(url);
+    const { data } = await fetchWithRetry(url);
     return data;
   } catch (err) {
     logDebug(`CoinGecko fetch failed for ${address}: ${err.message}`);
@@ -69,7 +91,11 @@ function tokenAgeDays(dateString) {
 }
 
 function loadCachedTokens() {
-  return readJSON(TOP_TOKENS_FILE, []);
+  const list = readJSON(TOP_TOKENS_FILE, []);
+  if (!list.length) {
+    logDebug('Cached token file пуст или не найден');
+  }
+  return list;
 }
 
 async function selectTopTokens() {
@@ -143,6 +169,8 @@ async function selectTopTokens() {
   const cached = loadCachedTokens();
   if (!cached.length) {
     console.warn('[TOP-TOKENS] ⚠️ Пустой список токенов.');
+  } else {
+    logDebug(`Loaded ${cached.length} tokens from cache`);
   }
   return cached;
 }

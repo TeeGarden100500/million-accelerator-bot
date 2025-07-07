@@ -1,12 +1,37 @@
 // 🔁 Циклический анализ токенов с логированием и Telegram-оповещением
 
+const fs = require('fs');
+const path = require('path');
+
 const defaultTokens = [
   '0xA5E59761eBD4436fa4d20E1A27c8a29FB2471Fc6', // DEGEN
   '0x6982508145454Ce325DdBE47a25d4ec3d2311933', // PEPE
 ];
 
-const { sendTelegramMessage } = require("../utils/telegram");
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const { sendTelegramMessage } = require('../utils/telegram');
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const DEBUG = process.env.DEBUG_LOG_LEVEL === 'debug';
+const TOP_TOKENS_FILE = path.join(__dirname, '..', '..', 'data', 'top-tokens.json');
+
+function logDebug(msg) {
+  if (DEBUG) console.log(`[SCANNER] ${msg}`);
+}
+
+function loadTokensFromFile() {
+  try {
+    const raw = fs.readFileSync(TOP_TOKENS_FILE, 'utf8');
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list) || !list.length) {
+      logDebug('Файл top-tokens.json пуст.');
+      return [];
+    }
+    return list;
+  } catch (err) {
+    logDebug(`Не удалось загрузить top-tokens.json: ${err.message}`);
+    return [];
+  }
+}
 
 async function scanToken(token) {
   try {
@@ -46,13 +71,8 @@ function startScheduledTokenScan(initialTokens) {
     let tokens = Array.isArray(initialTokens) ? initialTokens : [];
     initialTokens = null;
     if (!tokens.length) {
-      try {
-        // eslint-disable-next-line global-require
-        tokens = require('../../data/top-tokens.json');
-      } catch (err) {
-        console.error('[SCHEDULER] ❌ Ошибка загрузки токенов:', err.message);
-        return;
-      }
+      tokens = loadTokensFromFile();
+      logDebug(`Загружено ${tokens.length} токенов из файла.`);
     }
 
     if (!tokens.length) {
