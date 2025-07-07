@@ -18,30 +18,33 @@ function logDebug(msg) {
   if (DEBUG) console.log(`[SCANNER] ${msg}`);
 }
 
-function loadTokensFromFile() {
+async function loadTokensFromFile() {
   try {
     const raw = fs.readFileSync(TOP_TOKENS_FILE, 'utf8');
     const list = JSON.parse(raw);
-    if (!Array.isArray(list) || !list.length) {
-      logDebug('Файл top-tokens.json пуст.');
-      return [];
+    const count = Array.isArray(list) ? list.length : 0;
+    logDebug(`Загружено ${count} токенов из файла.`);
+    if (count) {
+      await sendTelegramMessage(`\uD83E\uDDE0 Загружено ${count} токенов из DexScreener`);
     }
-    return list;
+    return count ? list : [];
   } catch (err) {
-    logDebug(`Не удалось загрузить top-tokens.json: ${err.message}`);
+    const msg = `Ошибка при загрузке токенов: ${err.message}`;
+    console.error(`[SCANNER] ${msg}`);
+    await sendTelegramMessage(`❗ ${msg}`);
     return [];
   }
 }
 
 async function scanToken(token) {
   try {
-    console.log(`[SCAN] ▶️ Начинаем анализ токена: ${token}`);
-    // Здесь будет логика анализа (эмуляция)
-    await delay(1000); // эмуляция работы
-    console.log(`[SCAN] ✅ Анализ завершён: ${token}`);
+    console.log(`[SCAN] \uD83D\uDCCA Анализируем токен: ${token}`);
+    await delay(1000);
+    console.log(`[SCAN] \u2705 Анализ завершён: ${token}`);
+    await sendTelegramMessage(`Анализ токена ${token} завершён \u2705`);
   } catch (err) {
-    console.error(`[SCAN ERROR] ❌ Ошибка при анализе токена ${token}: ${err.message}`);
-    await sendTelegramMessage(`❌ Ошибка при анализе токена:\n${token}\n\n${err.message}`);
+    console.error(`[SCAN ERROR] Ошибка при анализе токена ${token}: ${err.message}`);
+    await sendTelegramMessage(`❌ Ошибка при анализе токена:\n${token}\n${err.message}`);
   }
 }
 
@@ -49,11 +52,13 @@ let isScanning = false;
 
 async function startTokenScanCycle(tokens = defaultTokens) {
   if (!tokens.length) {
-    console.error('[ERROR] Список токенов пуст. Останавливаем анализ.');
+    console.warn('TokenScanner получил пустой массив. Анализ не запущен.');
+    await sendTelegramMessage('TokenScanner получил пустой массив. Анализ не запущен.');
     return;
   }
 
   console.log('🚀 Запускаем цикл анализа токенов...');
+  logDebug(`Всего токенов для анализа: ${tokens.length}`);
   for (const token of tokens) {
     await scanToken(token);
     await delay(10000); // 10 секунд между токенами
@@ -71,8 +76,7 @@ function startScheduledTokenScan(initialTokens) {
     let tokens = Array.isArray(initialTokens) ? initialTokens : [];
     initialTokens = null;
     if (!tokens.length) {
-      tokens = loadTokensFromFile();
-      logDebug(`Загружено ${tokens.length} токенов из файла.`);
+      tokens = await loadTokensFromFile();
     }
 
     if (!tokens.length) {

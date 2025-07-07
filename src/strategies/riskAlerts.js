@@ -66,11 +66,12 @@ function buildRiskList(symbol, meta) {
 
 async function checkRisks() {
   sendHeartbeat(MODULE_NAME);
-  const metas = loadJson(META_PATH, []);
-  const bySymbol = {};
-  metas.forEach((m) => {
-    if (m.symbol) bySymbol[String(m.symbol).toUpperCase()] = m;
-  });
+  try {
+    const metas = loadJson(META_PATH, []);
+    const bySymbol = {};
+    metas.forEach((m) => {
+      if (m.symbol) bySymbol[String(m.symbol).toUpperCase()] = m;
+    });
 
   const symbols = gatherSymbols();
   if (!symbols.length) return;
@@ -108,6 +109,10 @@ async function checkRisks() {
   }
 
   if (updated) saveJson(SENT_PATH, history);
+  } catch (err) {
+    console.error('[RISK] Ошибка проверки рисков:', err.message);
+    await sendTelegramAlert(`❗ Ошибка riskAlerts: ${err.message}`);
+  }
 }
 
 function startRiskAlerts() {

@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const { sendTelegramMessage } = require('../utils/telegram');
 
 const TOP_TOKENS_FILE = path.join(__dirname, '..', '..', 'data', 'top-tokens.json');
 const BLACKLIST_FILE = path.join(__dirname, '..', '..', 'config', 'blacklist.json');
@@ -49,6 +50,10 @@ function readJSON(filePath, fallback) {
 
 function saveJSON(filePath, data) {
   try {
+    if (Array.isArray(data) && !data.length) {
+      logDebug('skip saving empty token list');
+      return;
+    }
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
   } catch (err) {
     logDebug(`Failed to write ${filePath}: ${err.message}`);
@@ -67,7 +72,10 @@ async function fetchDexTokens() {
     const { data } = await fetchWithRetry(url);
     return data.pairs || data;
   } catch (err) {
-    logDebug(`DexScreener API error: ${err.message}`);
+    const msg = `DexScreener API error: ${err.message}`;
+    console.error(msg);
+    logDebug(msg);
+    await sendTelegramMessage(`❗ ${msg}`);
     return null;
   }
 }
@@ -162,6 +170,8 @@ async function selectTopTokens() {
 
   if (result.length) {
     saveJSON(TOP_TOKENS_FILE, result);
+    logDebug(`Saved ${result.length} tokens`);
+    await sendTelegramMessage(`\uD83E\uDDE0 Загружено ${result.length} токенов из DexScreener`);
     return result;
   }
 

@@ -5,6 +5,8 @@ const { sendTelegramMessage } = require('./telegram');
 const { sendHeartbeat } = require('./utils/moduleMonitor');
 const MODULE_NAME = 'reportScheduler.js';
 
+const TOP_TOKENS_FILE = path.join(__dirname, 'data', 'top-tokens.json');
+
 const DEBUG = process.env.DEBUG_LOG_LEVEL === 'debug';
 function logDebug(msg) {
   if (DEBUG) console.log(msg);
@@ -19,6 +21,16 @@ const PATHS = {
   sentiment: path.join(__dirname, 'signals', 'sentimentScanner.json'),
   reportsDir: path.join(__dirname, 'history', 'reports'),
 };
+
+function hasTokens() {
+  try {
+    const raw = fs.readFileSync(TOP_TOKENS_FILE, 'utf8');
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) && arr.length > 0;
+  } catch {
+    return false;
+  }
+}
 
 function loadJson(file, def = []) {
   try {
@@ -78,26 +90,37 @@ function buildReport(period) {
 
 async function sendReport(period) {
   sendHeartbeat(MODULE_NAME);
-  const report = buildReport(period);
-  saveReport(period, report);
+  try {
+    const report = buildReport(period);
+    saveReport(period, report);
 
-  let message = `\uD83D\uDCC8 Отчёт за ${period}\n`;
-  if (report.profit) {
-    const pct = (report.profit * 100).toFixed(2);
-    message += `Доходность: ${report.profit >= 0 ? '+' : ''}${pct}%\n`;
-  } else {
-    message += 'Доходность: нет данных\n';
+    let message = `\uD83D\uDCC8 Отчёт за ${period}\n`;
+    if (report.profit) {
+      const pct = (report.profit * 100).toFixed(2);
+      message += `Доходность: ${report.profit >= 0 ? '+' : ''}${pct}%\n`;
+    } else {
+      message += 'Доходность: нет данных\n';
+    }
+    message += `Открытых позиций: ${report.positions}\n`;
+    if (report.newSignals)
+      message += `Новые комбо-сигналы: ${report.newSignals}\n`;
+    if (report.ideas)
+      message += `Свежие идеи: ${report.ideas}\n`;
+    logDebug(message.trim());
+    await sendTelegramMessage(message.trim());
+  } catch (err) {
+    console.error('[REPORT] Ошибка формирования отчёта:', err.message);
+    await sendTelegramMessage(`❗ Ошибка формирования отчёта: ${err.message}`);
   }
-  message += `Открытых позиций: ${report.positions}\n`;
-  if (report.newSignals)
-    message += `Новые комбо-сигналы: ${report.newSignals}\n`;
-  if (report.ideas)
-    message += `Свежие идеи: ${report.ideas}\n`;
-  logDebug(message.trim());
-  await sendTelegramMessage(message.trim());
 }
 
 function startReportScheduler() {
+  if (!hasTokens()) {
+    const msg = '[REPORT] top-tokens.json пуст, планировщик не запущен';
+    console.warn(msg);
+    sendTelegramMessage(msg);
+    return;
+  }
   const cronMap = {
     weekly: '0 9 * * 1',
     monthly: '0 10 1 * *',
