@@ -84,6 +84,25 @@ async function fetchDexTokens() {
   }
 }
 
+async function checkDexScreenerHealth() {
+  const url = 'https://api.dexscreener.com/latest/dex/pairs?limit=1';
+  try {
+    await axios.get(url, { timeout: 5000 });
+    logDebug('DexScreener health check ok');
+    return true;
+  } catch (err) {
+    const msg = `DexScreener health check failed: ${err.message}`;
+    console.error(`[TOP-TOKENS] ${msg}`);
+    logDebug(msg);
+    try {
+      await sendTelegramMessage(`❗ ${msg}`);
+    } catch (tErr) {
+      console.error('Failed to send Telegram alert:', tErr.message);
+    }
+    return false;
+  }
+}
+
 async function fetchGeckoInfo(address) {
   try {
     const url = `https://api.coingecko.com/api/v3/coins/ethereum/contract/${address}`;
@@ -213,4 +232,4 @@ function startSelector() {
   setInterval(selectTopTokens, REFRESH_INTERVAL_MIN * 60 * 1000);
 }
 
-module.exports = { selectTopTokens, startSelector };
+module.exports = { selectTopTokens, startSelector, checkDexScreenerHealth };
