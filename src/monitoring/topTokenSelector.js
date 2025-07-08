@@ -73,7 +73,10 @@ function loadBlacklist() {
 async function fetchDexTokens() {
   try {
     const url = 'https://api.dexscreener.com/latest/dex/pairs';
-    const { data } = await fetchWithRetry(url);
+    logDebug(`Request URL ${url}`);
+    const res = await fetchWithRetry(url);
+    const { data } = res;
+    logDebug(`Received ${data?.pairs?.length ?? data?.length ?? 0} pairs`);
     return data.pairs || data;
   } catch (err) {
     const msg = `DexScreener API error: ${err.message}`;
